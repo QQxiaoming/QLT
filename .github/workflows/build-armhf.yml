@@ -1,0 +1,38 @@
+name: Build ARMHF
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Enable ARM emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm
+
+      - name: Build ARMHF image
+        run: docker build --platform linux/arm/v7 -f Dockerfile.armhf -t qlt-armhf:ci .
+
+      - name: Extract board executable
+        run: |
+          container_id="$(docker create --platform linux/arm/v7 qlt-armhf:ci)"
+          trap 'docker rm "$container_id" >/dev/null' EXIT
+          mkdir -p artifact
+          docker cp "$container_id:/src/build/QLT" artifact/QLT
+          file artifact/QLT
+          sha256sum artifact/QLT > artifact/QLT.sha256
+
+      - name: Upload ARMHF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QLT-armhf
+          path: artifact/

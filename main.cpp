@@ -1,10 +1,12 @@
 #include <QApplication>
-#include "ClockWidget.h"
+
+#include "RobotFaceWidget.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    ClockWidget clock;
-    clock.show();
+    RobotFaceWidget face;
+    face.setWindowFlag(Qt::FramelessWindowHint);
+    face.showFullScreen();
     return app.exec();
 }

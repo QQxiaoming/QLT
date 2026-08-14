@@ -14,8 +14,8 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 add_executable(QLT
     main.cpp
-    ClockWidget.cpp
-    ClockWidget.h
+    RobotFaceWidget.cpp
+    RobotFaceWidget.h
 )
 
 target_link_libraries(QLT PRIVATE Qt5::Widgets)

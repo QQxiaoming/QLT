@@ -200,11 +200,12 @@ bool BitBangUart::readByte(uint8_t *value, int startTimeoutUs, std::string *erro
         return false;
     }
 
-    if (!waitForStartBit(startTimeoutUs, errorMessage))
+    uint64_t startBitNs = 0;
+    if (!waitForStartBit(startTimeoutUs, &startBitNs, errorMessage))
         return false;
 
     uint8_t assembled = 0;
-    uint64_t sampleTime = monotonicNowNs() + bitPeriodNs_ + bitPeriodNs_ / 2;
+    uint64_t sampleTime = startBitNs + bitPeriodNs_ + bitPeriodNs_ / 2;
     for (int bit = 0; bit < 8; ++bit) {
         if (!sleepUntil(sampleTime, errorMessage))
             return false;
@@ -258,6 +259,49 @@ bool BitBangUart::readBytes(std::vector<uint8_t> *data,
     return true;
 }
 
+bool BitBangUart::waitForEdge(bool *fallingEdge,
+                              uint64_t *edgeTimeNs,
+                              int timeoutUs,
+                              std::string *errorMessage) const
+{
+    if (!fallingEdge || !edgeTimeNs) {
+        if (errorMessage)
+            *errorMessage = "waitForEdge received null output pointer";
+        return false;
+    }
+
+    if (timeoutUs < 0)
+        timeoutUs = 0;
+
+    timespec timeout;
+    timeout.tv_sec = timeoutUs / 1000000;
+    timeout.tv_nsec = static_cast<long>(timeoutUs % 1000000) * 1000L;
+
+    const int waitResult = gpiod_line_event_wait(rxLine_, &timeout);
+    if (waitResult < 0) {
+        if (errorMessage)
+            *errorMessage = errnoMessage("wait for rx edge failed");
+        return false;
+    }
+    if (waitResult == 0) {
+        if (errorMessage)
+            *errorMessage = "timeout waiting for edge";
+        return false;
+    }
+
+    gpiod_line_event event;
+    if (gpiod_line_event_read(rxLine_, &event) < 0) {
+        if (errorMessage)
+            *errorMessage = errnoMessage("read rx edge event failed");
+        return false;
+    }
+
+    *fallingEdge = event.event_type == GPIOD_LINE_EVENT_FALLING_EDGE;
+    *edgeTimeNs = static_cast<uint64_t>(event.ts.tv_sec) * 1000000000ULL
+                + static_cast<uint64_t>(event.ts.tv_nsec);
+    return true;
+}
+
 unsigned int BitBangUart::baudRate() const
 {
     return baudRate_;
@@ -291,44 +335,37 @@ bool BitBangUart::sampleRxValue(int *value, std::string *errorMessage) const
     return true;
 }
 
-bool BitBangUart::waitForStartBit(int timeoutUs, std::string *errorMessage) const
+bool BitBangUart::waitForStartBit(int timeoutUs, uint64_t *startBitNs, std::string *errorMessage) const
 {
+    if (!startBitNs) {
+        if (errorMessage)
+            *errorMessage = "waitForStartBit received null timestamp pointer";
+        return false;
+    }
+
     if (timeoutUs < 0)
         timeoutUs = 0;
 
-    timespec timeout;
-    timeout.tv_sec = timeoutUs / 1000000;
-    timeout.tv_nsec = static_cast<long>(timeoutUs % 1000000) * 1000L;
-
     while (true) {
-        const int waitResult = gpiod_line_event_wait(rxLine_, &timeout);
-        if (waitResult < 0) {
-            if (errorMessage)
-                *errorMessage = errnoMessage("wait for rx edge failed");
-            return false;
-        }
-        if (waitResult == 0) {
-            if (errorMessage)
+        bool fallingEdge = false;
+        uint64_t edgeTimeNs = 0;
+        if (!waitForEdge(&fallingEdge, &edgeTimeNs, timeoutUs, errorMessage)) {
+            if (errorMessage && *errorMessage == "timeout waiting for edge")
                 *errorMessage = "timeout waiting for start bit";
             return false;
         }
 
-        gpiod_line_event event;
-        if (gpiod_line_event_read(rxLine_, &event) < 0) {
-            if (errorMessage)
-                *errorMessage = errnoMessage("read rx edge event failed");
-            return false;
-        }
-
-        if (event.event_type != GPIOD_LINE_EVENT_FALLING_EDGE)
+        if (!fallingEdge)
             continue;
 
         int rxValue = 1;
         if (!sampleRxValue(&rxValue, errorMessage))
             return false;
 
-        if (rxValue == 0)
+        if (rxValue == 0) {
+            *startBitNs = edgeTimeNs;
             return true;
+        }
     }
 }
 

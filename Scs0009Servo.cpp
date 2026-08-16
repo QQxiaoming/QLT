@@ -22,11 +22,16 @@ Scs0009Servo::Scs0009Servo(BitBangUart *uart)
 
 bool Scs0009Servo::ping(uint8_t id, std::string *errorMessage)
 {
-    if (!sendInstruction(id, kInstructionPing, std::vector<uint8_t>(), errorMessage))
+    if (!sendPing(id, errorMessage))
         return false;
 
     std::vector<uint8_t> packet;
     return readStatusPacket(id, &packet, errorMessage);
+}
+
+bool Scs0009Servo::sendPing(uint8_t id, std::string *errorMessage)
+{
+    return sendInstruction(id, kInstructionPing, std::vector<uint8_t>(), errorMessage);
 }
 
 bool Scs0009Servo::writePosition(uint8_t id,

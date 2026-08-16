@@ -37,6 +37,10 @@ public:
                    std::size_t count,
                    int startTimeoutUs,
                    std::string *errorMessage = nullptr);
+    bool waitForEdge(bool *fallingEdge,
+                     uint64_t *edgeTimeNs,
+                     int timeoutUs,
+                     std::string *errorMessage = nullptr) const;
 
     unsigned int baudRate() const;
     uint64_t bitPeriodNs() const;
@@ -44,7 +48,7 @@ public:
 private:
     bool setTxValue(int value, std::string *errorMessage);
     bool sampleRxValue(int *value, std::string *errorMessage) const;
-    bool waitForStartBit(int timeoutUs, std::string *errorMessage) const;
+    bool waitForStartBit(int timeoutUs, uint64_t *startBitNs, std::string *errorMessage) const;
     bool sleepUntil(uint64_t targetNs, std::string *errorMessage) const;
     uint64_t monotonicNowNs() const;
     static std::string errnoMessage(const std::string &prefix);

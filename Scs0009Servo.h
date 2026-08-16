@@ -13,6 +13,7 @@ public:
     explicit Scs0009Servo(BitBangUart *uart);
 
     bool ping(uint8_t id, std::string *errorMessage = nullptr);
+    bool sendPing(uint8_t id, std::string *errorMessage = nullptr);
     bool writePosition(uint8_t id,
                        uint16_t position,
                        uint16_t time,

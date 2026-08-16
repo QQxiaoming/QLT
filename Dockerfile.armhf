@@ -12,6 +12,8 @@ RUN apt-get update \
         qtbase5-dev-tools \
         qml \
         qtdeclarative5-dev \
+        libgpiod-dev \
+        gpiod \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src

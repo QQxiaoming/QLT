@@ -6,11 +6,11 @@
     fragment@0 {
         target = <&i2c1>;
         __overlay__ {
-               ina226@41 {
-                    compatible = "ti,ina226";
-                    reg = <0x41>;                  /* 匹配你扫描到的 0x41 地址 */
-                    shunt-resistor = <10000>;      /* 采样电阻值，单位：微欧 (micro-ohms) */
-                };
+            ina226@41 {
+                compatible = "ti,ina226";
+                reg = <0x41>;
+                shunt-resistor = <10000>;  /* 采样电阻值，单位：微欧 (micro-ohms) */
+            };
         };
     };
 };

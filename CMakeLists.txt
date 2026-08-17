@@ -16,6 +16,7 @@ add_executable(QLT
     main.cpp
     RobotFaceWidget.cpp
     RobotFaceWidget.h
+    3rd/Si12T/Si12T.cpp
     3rd/SCServo/src/HLSCL.cpp
     3rd/SCServo/src/SCS.cpp
     3rd/SCServo/src/SCS0009.cpp

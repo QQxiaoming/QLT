@@ -11,6 +11,10 @@ echolog ()
     echo -e "\n${CYAN}[INFO]: ${1}${NC}\n"
 }
 
+if ! docker run --rm --privileged tonistiigi/binfmt --version &> /dev/null; then
+    docker run --privileged --rm tonistiigi/binfmt --install arm
+fi
+
 echolog "Creating and starting container..."
 CONTAINER_ID=`docker run -v "${CURRENT_PATH}":"/${PROJECT_DIR}" -itd qlt:latest`
 

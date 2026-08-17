@@ -16,29 +16,17 @@ add_executable(QLT
     main.cpp
     RobotFaceWidget.cpp
     RobotFaceWidget.h
+    3rd/SCServo/src/HLSCL.cpp
+    3rd/SCServo/src/SCS.cpp
+    3rd/SCServo/src/SCS0009.cpp
+    3rd/SCServo/src/SCSCL.cpp
+    3rd/SCServo/src/SCSerial.cpp
+    3rd/SCServo/src/SMS_STS.cpp
 )
 
+include_directories(3rd/SCServo/include/scservo)
+
 target_link_libraries(QLT PRIVATE Qt5::Widgets)
-
-find_package(PkgConfig QUIET)
-if (PkgConfig_FOUND)
-    pkg_check_modules(LIBGPIOD QUIET libgpiod)
-endif()
-
-if (LIBGPIOD_FOUND)
-    add_executable(servo_bitbang
-        servo_bitbang_main.cpp
-        BitBangUart.cpp
-        BitBangUart.h
-        Scs0009Servo.cpp
-        Scs0009Servo.h
-    )
-
-    target_include_directories(servo_bitbang PRIVATE ${LIBGPIOD_INCLUDE_DIRS})
-    target_compile_options(servo_bitbang PRIVATE ${LIBGPIOD_CFLAGS_OTHER})
-    target_link_directories(servo_bitbang PRIVATE ${LIBGPIOD_LIBRARY_DIRS})
-    target_link_libraries(servo_bitbang PRIVATE ${LIBGPIOD_LIBRARIES})
-endif()
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(QLT PRIVATE m)

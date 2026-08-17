@@ -53,7 +53,10 @@ int main(int argc, char *argv[])
         int r = std::atoi(argv[2]);
         int g = std::atoi(argv[3]);
         int b = std::atoi(argv[4]);
-        showRgbColor(io_expander, r, g, b);
+        io_expander.setLedColor(0, r, g, b);
+        io_expander.refreshLeds();
+        io_expander.setLedColor(11, r, g, b);
+        io_expander.refreshLeds();
     }
 
     return 0;

@@ -1,93 +1,172 @@
-// SPDX-FileCopyrightText: 2026 karaage0703
-// SPDX-FileCopyrightText: 2026 M5Stack Technology CO LTD
-// SPDX-License-Identifier: MIT
-//
-// Linux 版 Si12T (容量タッチセンサ IC、3 ch) 最小ドライバ。
-// Linux の i2c-dev (/dev/i2c-X) 経由で M5Stack 公式 StackChan K151 の
-// 頭部タッチセンサを読む。
-//
-// 使い方:
-//   Si12T touch("/dev/i2c-1");
-//   if (touch.begin()) {
-//       // polling task で loop:
-//       Si12T::Gesture g = touch.poll();
-//       if (g == Si12T::Gesture::Press) { ... }
-//   }
-
-#ifndef XANGI_STACKCHAN_SI12T_H_
-#define XANGI_STACKCHAN_SI12T_H_
+#ifndef __SI12T_H__
+#define __SI12T_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
-// 7bit I2C address (LTR-507 SEL pin tied to GND)
-#define SI12T_GND_ADDRESS 0x68
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-class Si12T {
-public:
-    enum class Gesture : uint8_t {
-        None          = 0,
-        Press         = 1,
-        Release       = 2,
-        SwipeForward  = 3,
-        SwipeBackward = 4,
-    };
+#define SI12T_VERSION "0.0.2"
 
-    enum class SensitivityType : uint8_t {
-        Low  = 0,
-        High = 1,
-    };
+/*LTR-507 SEL pin is "GND"*/
+#define SI12T_GND_ADDRESS 0x68  // 7bit i2c address
 
-    enum class SensitivityLevel : uint8_t {
-        L0 = 0, L1, L2, L3, L4, L5, L6, L7,
-    };
+#define SI12T_SENSITIVITY1_ADDR 0x02
+#define SI12T_SENSITIVITY2_ADDR 0x03
+#define SI12T_SENSITIVITY3_ADDR 0x04
+#define SI12T_SENSITIVITY4_ADDR 0x05
+#define SI12T_SENSITIVITY5_ADDR 0x06
+#define SI12T_SENSITIVITY6_ADDR 0x07
+#define SI12T_CTRL1_ADDR        0x08
+#define SI12T_CTRL2_ADDR        0x09
+#define SI12T_REF_RST1_ADDR     0x0A
+#define SI12T_REF_RST2_ADDR     0x0B
+#define SI12T_CH_HOLD1_ADDR     0x0C
+#define SI12T_CH_HOLD2_ADDR     0x0D
+#define SI12T_CAL_HOLD1_ADDR    0x0E
+#define SI12T_CAL_HOLD2_ADDR    0x0F
+#define SI12T_OUTPUT1_ADDR      0x10
+#define SI12T_OUTPUT2_ADDR      0x11
+#define SI12T_OUTPUT3_ADDR      0x12
 
-    explicit Si12T(const char* device = "/dev/i2c-1",
-                   uint8_t i2c_addr = SI12T_GND_ADDRESS);
-    ~Si12T();
+typedef enum { SI12T_TYPE_LOW = 0, SI12T_TYPE_HIGH } si12t_type_t;
 
-    Si12T(const Si12T&) = delete;
-    Si12T& operator=(const Si12T&) = delete;
+typedef enum {
+    SI12T_SENSITIVITY_LEVEL_0 = 0,
+    SI12T_SENSITIVITY_LEVEL_1,
+    SI12T_SENSITIVITY_LEVEL_2,
+    SI12T_SENSITIVITY_LEVEL_3,
+    SI12T_SENSITIVITY_LEVEL_4,
+    SI12T_SENSITIVITY_LEVEL_5,
+    SI12T_SENSITIVITY_LEVEL_6,
+    SI12T_SENSITIVITY_LEVEL_7,
+    SI12T_SENSITIVITY_LEVEL_INVALID,
+} si12t_sensitivity_level_t;
 
-    // 初期化失敗 (デバイス無し / I2C エラー / 権限不足) は false を返す。
-    bool begin(SensitivityType sens_type   = SensitivityType::Low,
-               SensitivityLevel sens_level = SensitivityLevel::L3);
+typedef enum { SI12T_OUTPUT_NONE = 0, SI12T_OUTPUT_LOW, SI12T_OUTPUT_MID, SI12T_OUTPUT_HIGH } si12t_output_t;
 
-    // 50ms 周期で呼ぶ。内部の TouchState (IDLE / TOUCHED / SWIPING) を更新して
-    // 検出したジェスチャを返す。
-    Gesture poll();
+/**
+ * @brief Si12T配置结构体
+ */
+typedef struct {
+    const char *i2c_device; /*!< Linux I2C设备节点，例如/dev/i2c-1 */
+    uint8_t dev_addr;       /*!< 设备地址，默认SI12T_GND_ADDRESS */
+} si12t_config_t;
 
-    // 直近の raw intensity (3 ch、各 0-3) を取得。デバッグ用。
-    void getIntensity(uint8_t out[3]) const;
+/**
+ * @brief Si12T设备句柄
+ */
+typedef struct si12t_dev_t *si12t_handle_t;
 
-    // -100..100 の重心位置 (intensity 加重平均、None なら 0)。
-    int16_t getPosition() const;
+extern uint8_t si12t_point_type[3];
 
-private:
-    // --- low-level I2C ---
-    bool writeReg(uint8_t reg, uint8_t value);
-    bool readReg(uint8_t reg, uint8_t* out);
+/**
+ * @brief 初始化Si12T设备
+ *
+ * @param config 配置参数
+ * @param handle 返回的设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_init(const si12t_config_t *config, si12t_handle_t *handle);
 
-    // --- setup helpers (Si12T.cpp ESP-IDF 版から移植) ---
-    bool enableChannel();
-    bool setCtrl1();
-    bool setCtrl2();
-    bool setSensitivity(SensitivityType type, SensitivityLevel level);
+/**
+ * @brief 初始化Si12T设备（使用灵敏度参数）
+ *
+ * @param handle 设备句柄
+ * @param sens_type 灵敏度类型
+ * @param sens_level 灵敏度等级
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_setup(si12t_handle_t handle, si12t_type_t sens_type, si12t_sensitivity_level_t sens_level);
 
-    // --- runtime ---
-    bool readTouchResult(uint8_t* out);
-    static void parseTouchResult(uint8_t raw, uint8_t out[3]);
+/**
+ * @brief 删除Si12T设备
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_delete(si12t_handle_t handle);
 
-    const char* device_;
-    uint8_t addr_;
-    int fd_ = -1;
-    bool    ready_     = false;
-    uint8_t intensity_[3] = {0, 0, 0};
+/**
+ * @brief 使能所有通道
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_enable_channel(si12t_handle_t handle);
 
-    // GestureRecognizer state
-    enum class TouchState : uint8_t { Idle, Touched, Swiping };
-    TouchState state_           = TouchState::Idle;
-    int16_t    initial_position_ = 0;
-    int16_t    swipe_threshold_  = 40;  // -100..100 範囲での閾値
-};
+/**
+ * @brief 设置灵敏度
+ *
+ * @param handle 设备句柄
+ * @param sens_type 灵敏度类型
+ * @param sens_level 灵敏度等级
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_set_sensitivity(si12t_handle_t handle, si12t_type_t sens_type, si12t_sensitivity_level_t sens_level);
 
-#endif  // XANGI_STACKCHAN_SI12T_H_
+/**
+ * @brief 获取灵敏度
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_get_sensitivity(si12t_handle_t handle);
+
+/**
+ * @brief 设置Ctrl1寄存器
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_set_ctrl1(si12t_handle_t handle);
+
+/**
+ * @brief 设置Ctrl2寄存器
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_set_ctrl2(si12t_handle_t handle);
+
+/**
+ * @brief 使能睡眠模式
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_sleep_enable(si12t_handle_t handle);
+
+/**
+ * @brief 禁用睡眠模式
+ *
+ * @param handle 设备句柄
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_sleep_disable(si12t_handle_t handle);
+
+/**
+ * @brief 读取触摸结果
+ *
+ * @param handle 设备句柄
+ * @param touch_result 触摸结果输出
+ * @return 0成功，负errno值表示失败
+ */
+int si12t_read_touch_result(si12t_handle_t handle, uint8_t *touch_result);
+
+/**
+ * @brief 解析触摸结果
+ *
+ * @param touch_result 触摸结果
+ */
+void si12t_parse_touch_result(uint8_t touch_result);
+
+void si12t_parse_touch_result_to(uint8_t touch_result, uint8_t *parsed_result);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __SI12T_H__ */

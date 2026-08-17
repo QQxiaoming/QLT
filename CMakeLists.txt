@@ -12,11 +12,20 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
+add_library(si12t STATIC
+    3rd/Si12T/Si12T.cpp
+)
+target_include_directories(si12t PUBLIC 3rd/Si12T)
+
+add_library(py32ioexpander STATIC
+    3rd/PY32IOExpander/PY32IOExpander.cpp
+)
+target_include_directories(py32ioexpander PUBLIC 3rd/PY32IOExpander)
+
 add_executable(QLT
     main.cpp
     RobotFaceWidget.cpp
     RobotFaceWidget.h
-    3rd/Si12T/Si12T.cpp
     3rd/SCServo/src/HLSCL.cpp
     3rd/SCServo/src/SCS.cpp
     3rd/SCServo/src/SCS0009.cpp
@@ -37,13 +46,18 @@ add_executable(scservo_test
 
 add_executable(si12t_test
     3rd/Si12T/example/si12t_test.cpp
-    3rd/Si12T/Si12T.cpp
+)
+
+add_executable(py32ioexpander_test
+    3rd/PY32IOExpander/example/py32ioexpander_test.cpp
 )
 
 include_directories(3rd/SCServo/include/scservo)
 include_directories(3rd/Si12T)
 
-target_link_libraries(QLT PRIVATE Qt5::Widgets)
+target_link_libraries(QLT PRIVATE Qt5::Widgets si12t)
+target_link_libraries(si12t_test PRIVATE si12t)
+target_link_libraries(py32ioexpander_test PRIVATE py32ioexpander)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(QLT PRIVATE m)

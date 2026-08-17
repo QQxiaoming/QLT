@@ -1,71 +1,31 @@
-// SPDX-FileCopyrightText: 2026 karaage0703
-// SPDX-License-Identifier: MIT
-
 #include "Si12T.h"
 
-#include <chrono>
-#include <cstdlib>
-#include <iomanip>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <thread>
+#include <cstdio>
 
-namespace {
-const char* gestureName(Si12T::Gesture gesture) {
-    switch (gesture) {
-        case Si12T::Gesture::Press: return "Press";
-        case Si12T::Gesture::Release: return "Release";
-        case Si12T::Gesture::SwipeForward: return "SwipeForward";
-        case Si12T::Gesture::SwipeBackward: return "SwipeBackward";
-        case Si12T::Gesture::None: return "None";
-    }
-    return "Unknown";
-}
+int main(int argc, char *argv[])
+{
+	const char *i2c_device = argc > 1 ? argv[1] : "/dev/i2c-1";
+	si12t_config_t config = {.i2c_device = i2c_device, .dev_addr = SI12T_GND_ADDRESS};
+	si12t_handle_t handle = nullptr;
 
-uint8_t parseAddress(const char* text) {
-    char* end = nullptr;
-    const unsigned long value = std::strtoul(text, &end, 0);
-    if (*text == '\0' || *end != '\0' || value > 0x7f) {
-        throw std::invalid_argument("I2C address must be a 7-bit value, e.g. 0x68");
-    }
-    return static_cast<uint8_t>(value);
-}
-}  // namespace
+	int ret = si12t_init(&config, &handle);
+	if (ret != 0) {
+		std::fprintf(stderr, "Failed to open %s: %d\n", i2c_device, ret);
+		return 1;
+	}
 
-int main(int argc, char* argv[]) {
-    const char* device = argc > 1 ? argv[1] : "/dev/i2c-1";
-    const uint8_t address = argc > 2 ? parseAddress(argv[2]) : SI12T_GND_ADDRESS;
+	ret = si12t_setup(handle, SI12T_TYPE_LOW, SI12T_SENSITIVITY_LEVEL_3);
+	uint8_t touch_result = 0;
+	if (ret == 0) {
+		ret = si12t_read_touch_result(handle, &touch_result);
+	}
+	if (ret == 0) {
+		si12t_parse_touch_result_to(touch_result, si12t_point_type);
+		std::printf("touch: %u %u %u\n", si12t_point_type[0], si12t_point_type[1], si12t_point_type[2]);
+	} else {
+		std::fprintf(stderr, "Si12T I2C operation failed: %d\n", ret);
+	}
 
-    try {
-        Si12T touch(device, address);
-        if (!touch.begin()) {
-            std::cerr << "Si12T initialization failed: device=" << device
-                      << ", address=0x" << std::hex << static_cast<int>(address)
-                      << std::dec << std::endl;
-            return EXIT_FAILURE;
-        }
-
-        std::cout << "Si12T ready on " << device << ", address=0x"
-                  << std::hex << static_cast<int>(address) << std::dec
-                  << ". Press Ctrl-C to stop.\n";
-
-        for (;;) {
-            const Si12T::Gesture gesture = touch.poll();
-            uint8_t intensity[3] = {0, 0, 0};
-            touch.getIntensity(intensity);
-
-            std::cout << "intensity=[" << static_cast<int>(intensity[0]) << ", "
-                      << static_cast<int>(intensity[1]) << ", "
-                      << static_cast<int>(intensity[2]) << "] position="
-                      << std::setw(4) << touch.getPosition() << " gesture="
-                      << gestureName(gesture) << '\n';
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-    } catch (const std::exception& error) {
-        std::cerr << "Usage: " << argv[0]
-                  << " [i2c-device] [7-bit-address]\nError: "
-                  << error.what() << std::endl;
-        return EXIT_FAILURE;
-    }
+	si12t_delete(handle);
+	return ret == 0 ? 0 : 1;
 }

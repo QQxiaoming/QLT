@@ -1,0 +1,1 @@
+dtc -I dts -O dtb -o /boot/qlt-overlay.dtbo qlt-overlay.dts

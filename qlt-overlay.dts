@@ -13,4 +13,53 @@
             };
         };
     };
+
+    fragment@1 {
+        target = <&pinctrl>;
+        __overlay__ {
+            qlt_pa6_input: qlt-pa6-input {
+                pins {
+                    pinmux = <0x0600>;
+                    bias-disable;
+                };
+            };
+
+            qlt_pb10_input: qlt-pb10-input {
+                pins {
+                    pinmux = <0x1a00>;
+                    bias-disable;
+                };
+            };
+        };
+    };
+
+    fragment@2 {
+        target = <&gpioa>;
+        __overlay__ {
+            pinctrl-names = "default";
+            pinctrl-0 = <&qlt_pa6_input>;
+
+            pa6_input: pa6-input {
+                gpio-hog;
+                gpios = <6 0>;
+                input;
+                line-name = "pa6-input";
+            };
+        };
+    };
+
+    fragment@3 {
+        target = <&gpiob>;
+        __overlay__ {
+            pinctrl-names = "default";
+            pinctrl-0 = <&qlt_pb10_input>;
+
+            pb10_input: pb10-input {
+                gpio-hog;
+                gpios = <10 0>;
+                input;
+                line-name = "pb10-input";
+            };
+        };
+    };
 };

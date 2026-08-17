@@ -25,7 +25,23 @@ add_executable(QLT
     3rd/SCServo/src/SMS_STS.cpp
 )
 
+add_executable(scservo_test
+    3rd/SCServo/example/Ping.cpp
+    3rd/SCServo/src/HLSCL.cpp
+    3rd/SCServo/src/SCS.cpp
+    3rd/SCServo/src/SCS0009.cpp
+    3rd/SCServo/src/SCSCL.cpp
+    3rd/SCServo/src/SCSerial.cpp
+    3rd/SCServo/src/SMS_STS.cpp
+)
+
+add_executable(si12t_test
+    3rd/Si12T/example/si12t_test.cpp
+    3rd/Si12T/Si12T.cpp
+)
+
 include_directories(3rd/SCServo/include/scservo)
+include_directories(3rd/Si12T)
 
 target_link_libraries(QLT PRIVATE Qt5::Widgets)
 

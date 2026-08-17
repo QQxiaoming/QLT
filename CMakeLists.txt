@@ -54,8 +54,9 @@ add_executable(py32ioexpander_test
 
 include_directories(3rd/SCServo/include/scservo)
 include_directories(3rd/Si12T)
+include_directories(3rd/PY32IOExpander)
 
-target_link_libraries(QLT PRIVATE Qt5::Widgets si12t)
+target_link_libraries(QLT PRIVATE Qt5::Widgets si12t py32ioexpander)
 target_link_libraries(si12t_test PRIVATE si12t)
 target_link_libraries(py32ioexpander_test PRIVATE py32ioexpander)
 

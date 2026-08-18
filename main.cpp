@@ -16,6 +16,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    RobotFaceWidget face;
+    face.setWindowFlag(Qt::FramelessWindowHint);
+    face.showFullScreen();
+
     LedThread ledThread(&hal);
     ledThread.start();
     ledThread.cmd("rainbow_flow");
@@ -23,10 +27,12 @@ int main(int argc, char *argv[])
     qRegisterMetaType<HardwareHal::HeadPetGesture>("HardwareHal::HeadPetGesture");
     GestureThread gestureThread(&hal);
     QObject::connect(&gestureThread, &GestureThread::gestureDetected, &app,
-                     [](HardwareHal::HeadPetGesture gesture) {
+                     [&face](HardwareHal::HeadPetGesture gesture) {
                          switch (gesture) {
                          case HardwareHal::HeadPetGesture::Press:
                              std::printf("gesture: press\n");
+                             face.setExpression(RobotFaceWidget::Expression::Custom);
+                             face.setCustomImage("/root/1.jpg");
                              break;
                          case HardwareHal::HeadPetGesture::Release:
                              std::printf("gesture: release\n");
@@ -44,9 +50,7 @@ int main(int argc, char *argv[])
                      Qt::QueuedConnection);
     gestureThread.start();
 
-    RobotFaceWidget face;
-    face.setWindowFlag(Qt::FramelessWindowHint);
-    face.showFullScreen();
+
 
     return app.exec();
 }

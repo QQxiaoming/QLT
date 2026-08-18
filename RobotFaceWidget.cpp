@@ -28,13 +28,35 @@ void RobotFaceWidget::setExpression(Expression newExpression)
 
     expression = newExpression;
     animationFrame = 0;
+
+    if (expressionIsAnimated())
+        animationTimer->start();
+    else
+        animationTimer->stop();
+
     update();
+}
+
+bool RobotFaceWidget::setCustomImage(const QString &imagePath)
+{
+    QPixmap image(imagePath);
+    if (image.isNull())
+        return false;
+
+    customImage = image;
+    setExpression(Expression::Custom);
+    return true;
 }
 
 void RobotFaceWidget::advanceAnimation()
 {
     ++animationFrame;
     update();
+}
+
+bool RobotFaceWidget::expressionIsAnimated() const
+{
+    return expression != Expression::Custom;
 }
 
 void RobotFaceWidget::mousePressEvent(QMouseEvent *event)
@@ -52,6 +74,9 @@ void RobotFaceWidget::mousePressEvent(QMouseEvent *event)
         setExpression(Expression::Shy);
         break;
     case Expression::Shy:
+        setExpression(Expression::Happy);
+        break;
+    case Expression::Custom:
         setExpression(Expression::Happy);
         break;
     }
@@ -152,6 +177,18 @@ void RobotFaceWidget::drawShyExpression(QPainter &painter, qreal size) const
     drawSmile(painter, size, breath);
 }
 
+void RobotFaceWidget::drawCustomImage(QPainter &painter) const
+{
+    if (customImage.isNull())
+        return;
+
+    const QPixmap scaledImage = customImage.scaled(size(), Qt::KeepAspectRatio,
+                                                    Qt::SmoothTransformation);
+    const QPoint imageOrigin((width() - scaledImage.width()) / 2,
+                             (height() - scaledImage.height()) / 2);
+    painter.drawPixmap(imageOrigin, scaledImage);
+}
+
 void RobotFaceWidget::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
@@ -160,6 +197,11 @@ void RobotFaceWidget::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing);
 
     painter.fillRect(rect(), Qt::black);
+
+    if (expression == Expression::Custom) {
+        drawCustomImage(painter);
+        return;
+    }
 
     const qreal size = qMin(width(), height());
     const QPointF origin((width() - size) / 2.0, (height() - size) / 2.0);
@@ -178,6 +220,8 @@ void RobotFaceWidget::paintEvent(QPaintEvent *event)
         break;
     case Expression::Shy:
         drawShyExpression(painter, size);
+        break;
+    case Expression::Custom:
         break;
     }
 }

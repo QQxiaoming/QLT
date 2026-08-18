@@ -1,4 +1,7 @@
 #include <QApplication>
+#include <QMetaObject>
+#include <QThread>
+#include <QTimer>
 #include <cstdio>
 
 #include "GestureThread.h"
@@ -22,7 +25,39 @@ int main(int argc, char *argv[])
 
     LedThread ledThread(&hal);
     ledThread.start();
-    ledThread.cmd("rainbow_flow");
+
+    QThread startupThread;
+    QObject startupWorker;
+    startupWorker.moveToThread(&startupThread);
+    QObject::connect(&startupThread, &QThread::started, &startupWorker,
+                     [&face, &ledThread, &startupThread, &startupWorker] {
+                         const auto setFaceExpression = [&face](RobotFaceWidget::Expression expression) {
+                             QMetaObject::invokeMethod(&face, [expression, &face] {
+                                 face.setExpression(expression);
+                             }, Qt::QueuedConnection);
+                         };
+
+                         ledThread.cmd("rainbow_flow");
+                         setFaceExpression(RobotFaceWidget::Expression::Happy);
+
+                         QTimer::singleShot(2500, &startupWorker, [&ledThread, setFaceExpression] {
+                             ledThread.cmd("fixed 255 100 180");
+                             setFaceExpression(RobotFaceWidget::Expression::Cute);
+                         });
+                         QTimer::singleShot(5000, &startupWorker, [&ledThread, setFaceExpression] {
+                             ledThread.cmd("blink 255 80 140 350");
+                             setFaceExpression(RobotFaceWidget::Expression::Shy);
+                         });
+                         QTimer::singleShot(7500, &startupWorker, [&ledThread, setFaceExpression] {
+                             ledThread.cmd("rainbow_flow");
+                             setFaceExpression(RobotFaceWidget::Expression::Happy);
+                         });
+                         QTimer::singleShot(9000, &startupWorker, [&startupThread] {
+                             startupThread.quit();
+                         });
+                     });
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &startupThread, &QThread::quit);
+    startupThread.start();
 
     qRegisterMetaType<HardwareHal::HeadPetGesture>("HardwareHal::HeadPetGesture");
     GestureThread gestureThread(&hal);
@@ -50,7 +85,7 @@ int main(int argc, char *argv[])
                      Qt::QueuedConnection);
     gestureThread.start();
 
-
-
-    return app.exec();
+    const int result = app.exec();
+    startupThread.wait();
+    return result;
 }

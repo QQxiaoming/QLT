@@ -387,7 +387,7 @@ bool HardwareHal::initializeExpander()
 
     io_expander_.setDirection(kServoPowerPin, true);
     io_expander_.setPullMode(kServoPowerPin, true);
-    setServoPowerEnabled(true);
+    setServoPowerEnabled(false);
     usleep(200 * 1000);
 
     io_expander_.setDirection(kRgbDataPin, true);
@@ -412,7 +412,7 @@ bool HardwareHal::initializeExpander()
         return false;
     }
 
-    servo_init();
+    //servo_init();
     
     return true;
 }

@@ -156,6 +156,11 @@ int SCSCL::EnableTorque(u8 ID, u8 Enable)
 	return this->writeByte(ID, SCSCL_TORQUE_ENABLE, Enable);
 }
 
+int SCSCL::ReadToqueEnable(int ID)
+{
+	return readWord(ID, SCSCL_TORQUE_ENABLE);
+}
+
 /** @brief Unlock EEPROM */
 int SCSCL::unLockEeprom(u8 ID)
 {

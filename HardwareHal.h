@@ -1,9 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 #include "PY32IOExpander.hpp"
 #include "Si12T.h"
+#include <SCS0009.h>
+
+namespace motion { class Motion; }
 
 class HardwareHal
 {
@@ -16,6 +20,7 @@ public:
 
     bool initialize();
     bool readTouchIntensities(uint8_t intensities[3]);
+    void servo_init();
 
     void setServoPowerEnabled(bool enabled);
     void setRgbLeftLed(uint8_t index, uint8_t r, uint8_t g, uint8_t b);
@@ -31,4 +36,6 @@ private:
 
     m5::PY32IOExpander io_expander_;
     si12t_handle_t si12t_;
+    SCS0009 _scs_bus;
+    std::unique_ptr<motion::Motion> _motion;
 };

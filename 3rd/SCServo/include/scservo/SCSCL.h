@@ -131,6 +131,7 @@ class SCSCL : public SCSerial
 	virtual int PWMMode(u8 ID);
 	virtual int WritePWM(u8 ID, s16 pwmOut);
 	virtual int EnableTorque(u8 ID, u8 Enable);
+	virtual int ReadToqueEnable(int ID);
 	virtual int unLockEeprom(u8 ID);
 	virtual int LockEeprom(u8 ID);
 	virtual int FeedBack(u8 ID);

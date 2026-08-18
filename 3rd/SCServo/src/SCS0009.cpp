@@ -152,6 +152,11 @@ int SCS0009::EnableTorque(u8 ID, u8 Enable)
 	return this->writeByte(ID, SCS0009_TORQUE_ENABLE, Enable);
 }
 
+int SCS0009::ReadToqueEnable(int ID)
+{
+	return readWord(ID, SCS0009_TORQUE_ENABLE);
+}
+
 /** @brief Unlock EEPROM */
 int SCS0009::unLockEeprom(u8 ID)
 {

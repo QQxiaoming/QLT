@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(QLT VERSION 1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -40,6 +40,14 @@ add_executable(QLT
     LedThread.h
     GestureThread.cpp
     GestureThread.h
+    motion_math.cpp
+    motion_math.h
+    motion.cpp
+    motion.h
+    servo.cpp
+    servo.h
+    settings.cpp
+    settings.h
     RobotFaceWidget.cpp
     RobotFaceWidget.h
 )
@@ -60,7 +68,10 @@ include_directories(3rd/SCServo/include/scservo)
 include_directories(3rd/Si12T)
 include_directories(3rd/PY32IOExpander)
 
-target_link_libraries(QLT PRIVATE Qt5::Widgets si12t py32ioexpander SCServo)
+set(SMOOTH_UI_TOOLKIT_BUILD_EXAMPLE OFF)
+add_subdirectory(smooth_ui_toolkit)
+
+target_link_libraries(QLT PRIVATE Qt5::Widgets si12t py32ioexpander SCServo smooth_ui_toolkit)
 target_link_libraries(si12t_test PRIVATE si12t)
 target_link_libraries(py32ioexpander_test PRIVATE py32ioexpander)
 target_link_libraries(scservo_test PRIVATE SCServo)

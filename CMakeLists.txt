@@ -22,10 +22,7 @@ add_library(py32ioexpander STATIC
 )
 target_include_directories(py32ioexpander PUBLIC 3rd/PY32IOExpander)
 
-add_executable(QLT
-    main.cpp
-    RobotFaceWidget.cpp
-    RobotFaceWidget.h
+add_library(SCServo STATIC
     3rd/SCServo/src/HLSCL.cpp
     3rd/SCServo/src/SCS.cpp
     3rd/SCServo/src/SCS0009.cpp
@@ -33,15 +30,22 @@ add_executable(QLT
     3rd/SCServo/src/SCSerial.cpp
     3rd/SCServo/src/SMS_STS.cpp
 )
+target_include_directories(SCServo PUBLIC 3rd/SCServo/include/scservo)
+
+add_executable(QLT
+    main.cpp
+    HardwareHal.cpp
+    HardwareHal.h
+    LedThread.cpp
+    LedThread.h
+    GestureThread.cpp
+    GestureThread.h
+    RobotFaceWidget.cpp
+    RobotFaceWidget.h
+)
 
 add_executable(scservo_test
     3rd/SCServo/example/Ping.cpp
-    3rd/SCServo/src/HLSCL.cpp
-    3rd/SCServo/src/SCS.cpp
-    3rd/SCServo/src/SCS0009.cpp
-    3rd/SCServo/src/SCSCL.cpp
-    3rd/SCServo/src/SCSerial.cpp
-    3rd/SCServo/src/SMS_STS.cpp
 )
 
 add_executable(si12t_test
@@ -56,9 +60,10 @@ include_directories(3rd/SCServo/include/scservo)
 include_directories(3rd/Si12T)
 include_directories(3rd/PY32IOExpander)
 
-target_link_libraries(QLT PRIVATE Qt5::Widgets si12t py32ioexpander)
+target_link_libraries(QLT PRIVATE Qt5::Widgets si12t py32ioexpander SCServo)
 target_link_libraries(si12t_test PRIVATE si12t)
 target_link_libraries(py32ioexpander_test PRIVATE py32ioexpander)
+target_link_libraries(scservo_test PRIVATE SCServo)
 
 if (UNIX AND NOT APPLE)
     target_link_libraries(QLT PRIVATE m)

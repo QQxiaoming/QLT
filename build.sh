@@ -19,7 +19,7 @@ echolog "Creating and starting container..."
 CONTAINER_ID=`docker run -v "${CURRENT_PATH}":"/${PROJECT_DIR}" -itd qlt:latest`
 
 echolog "Compiling in container..."
-docker exec -it -w "/${PROJECT_DIR}/" "${CONTAINER_ID}" bash -c "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --target all"
+docker exec -it -w "/${PROJECT_DIR}/" "${CONTAINER_ID}" bash -c "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --target all -j$(nproc)"
 
 echolog "Stopping container..."
 docker stop "${CONTAINER_ID}"

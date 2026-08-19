@@ -65,35 +65,6 @@ bool RobotFaceWidget::expressionIsAnimated() const
     return expression != Expression::Custom;
 }
 
-void RobotFaceWidget::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() != Qt::LeftButton) {
-        QWidget::mousePressEvent(event);
-        return;
-    }
-
-    switch (expression) {
-    case Expression::Happy:
-        setExpression(Expression::Cute);
-        break;
-    case Expression::Cute:
-        setExpression(Expression::Shy);
-        break;
-    case Expression::Shy:
-        setExpression(Expression::Happy);
-        break;
-    case Expression::Excited:
-        setExpression(Expression::Love);
-        break;
-    case Expression::Love:
-        setExpression(Expression::Happy);
-        break;
-    case Expression::Custom:
-        setExpression(Expression::Happy);
-        break;
-    }
-}
-
 void RobotFaceWidget::drawDotEyes(QPainter &painter, qreal size, qreal verticalOffset) const
 {
     painter.setPen(Qt::NoPen);

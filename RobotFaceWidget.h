@@ -7,6 +7,7 @@
 class QTimer;
 class QMouseEvent;
 class QString;
+class QColor;
 
 class RobotFaceWidget : public QWidget
 {
@@ -43,6 +44,10 @@ private:
     void drawDotEyes(QPainter &painter, qreal size, qreal verticalOffset = 0.0) const;
     void drawSparkleEye(QPainter &painter, qreal centerX, qreal centerY, qreal size,
                         qreal verticalScale = 1.0, qreal pupilOffset = 0.0) const;
+    void drawTwinkleStar(QPainter &painter, qreal centerX, qreal centerY, qreal starRadius,
+                        qreal opacity) const;
+    void drawBalloon(QPainter &painter, qreal centerX, qreal centerY, qreal size,
+                     const QColor &color) const;
     void drawSmile(QPainter &painter, qreal size, qreal verticalOffset = 0.0) const;
     bool expressionIsAnimated() const;
 

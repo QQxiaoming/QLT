@@ -3,6 +3,7 @@
 #include <QThread>
 #include <QTimer>
 #include <array>
+#include <atomic>
 #include <cstdio>
 #include <functional>
 
@@ -134,19 +135,23 @@ int main(int argc, char *argv[])
     QTimer startupTimer(&startupWorker);
     startupTimer.setSingleShot(true);
     std::size_t startupStep = 0;
+    std::atomic<bool> startupSequenceFinished{false};
     startupWorker.moveToThread(&startupThread);
-    const auto applyStartupStep = [&startupSequence, &startupTimer](std::size_t index) {
+    const auto applyStartupStep = [&startupSequence, &startupTimer, &startupSequenceFinished](std::size_t index) {
         const StartupStep& step = startupSequence[index];
         step.action();
+        // Terminal step: no timer, no press wait, sequence is considered complete.
+        startupSequenceFinished = !step.waitForPress && step.durationMs <= 0;
         if (!step.waitForPress && step.durationMs > 0) {
             startupTimer.start(step.durationMs);
         }
     };
     std::function<void()> advanceStartupStep;
-    advanceStartupStep = [&startupSequence, &startupStep, &startupTimer, applyStartupStep] {
+    advanceStartupStep = [&startupSequence, &startupStep, &startupTimer, &startupSequenceFinished, applyStartupStep] {
         ++startupStep;
         if (startupStep >= startupSequence.size()) {
             startupTimer.stop();
+            startupSequenceFinished = true;
             return;
         }
 
@@ -166,7 +171,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<HardwareHal::HeadPetGesture>("HardwareHal::HeadPetGesture");
     GestureThread gestureThread(&hal);
     QObject::connect(&gestureThread, &GestureThread::gestureDetected, &app,
-                     [&face, &startupWorker, &startupSequence, &startupStep,
+                     [&face, &startupWorker, &startupSequence, &startupStep, &startupSequenceFinished,
                       &advanceStartupStep, restartStartupSequence](HardwareHal::HeadPetGesture gesture) {
                          switch (gesture) {
                          case HardwareHal::HeadPetGesture::Press:
@@ -184,8 +189,10 @@ int main(int argc, char *argv[])
                              break;
                          case HardwareHal::HeadPetGesture::SwipeForward:
                              //std::printf("gesture: swipe forward\n");
-                             QMetaObject::invokeMethod(&startupWorker, restartStartupSequence,
-                                                       Qt::QueuedConnection);
+                             if (startupSequenceFinished) {
+                                 QMetaObject::invokeMethod(&startupWorker, restartStartupSequence,
+                                                           Qt::QueuedConnection);
+                             }
                              break;
                          case HardwareHal::HeadPetGesture::SwipeBackward:
                              //std::printf("gesture: swipe backward\n");

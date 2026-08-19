@@ -5,6 +5,7 @@
 #include <QPainterPath>
 #include <QTimer>
 
+#include <algorithm>
 #include <cmath>
 
 RobotFaceWidget::RobotFaceWidget(QWidget *parent)
@@ -121,6 +122,51 @@ void RobotFaceWidget::drawSparkleEye(QPainter &painter, qreal centerX, qreal cen
                 pupilRadius * 0.3, pupilRadiusY * 0.3);
 }
 
+void RobotFaceWidget::drawTwinkleStar(QPainter &painter, qreal centerX, qreal centerY,
+                                      qreal starRadius, qreal opacity) const
+{
+    if (opacity <= 0.0)
+        return;
+
+    QPainterPath star;
+    for (int i = 0; i < 8; ++i) {
+        const qreal angle = i * M_PI / 4.0;
+        const qreal radius = (i % 2 == 0) ? starRadius : starRadius * 0.35;
+        const QPointF point(centerX + radius * std::sin(angle), centerY - radius * std::cos(angle));
+        if (i == 0)
+            star.moveTo(point);
+        else
+            star.lineTo(point);
+    }
+    star.closeSubpath();
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(255, 235, 150, static_cast<int>(opacity * 235)));
+    painter.drawPath(star);
+}
+
+void RobotFaceWidget::drawBalloon(QPainter &painter, qreal centerX, qreal centerY, qreal size,
+                                  const QColor &color) const
+{
+    const qreal balloonWidth = size * 0.09;
+    const qreal balloonHeight = size * 0.115;
+
+    QPainterPath balloon;
+    balloon.addEllipse(QPointF(centerX, centerY), balloonWidth, balloonHeight);
+    balloon.moveTo(centerX - balloonWidth * 0.18, centerY + balloonHeight * 0.92);
+    balloon.lineTo(centerX, centerY + balloonHeight * 1.18);
+    balloon.lineTo(centerX + balloonWidth * 0.18, centerY + balloonHeight * 0.92);
+    balloon.closeSubpath();
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    painter.drawPath(balloon);
+
+    painter.setPen(QPen(color.darker(130), size * 0.004));
+    painter.drawLine(QPointF(centerX, centerY + balloonHeight * 1.18),
+                     QPointF(centerX, centerY + balloonHeight * 2.6));
+}
+
 void RobotFaceWidget::drawSmile(QPainter &painter, qreal size, qreal verticalOffset) const
 {
     QPainterPath mouth;
@@ -185,18 +231,34 @@ void RobotFaceWidget::drawShyExpression(QPainter &painter, qreal size) const
 
 void RobotFaceWidget::drawExcitedExpression(QPainter &painter, qreal size) const
 {
-    const qreal breath = std::sin(animationFrame * 0.09) * size * 0.018;
+    const qreal breath = std::sin(animationFrame * 0.06) * size * 0.012;
     const qreal eyeY = size * 0.42 + breath;
-    const qreal gazeOffset = std::sin(animationFrame * 0.12) * size * 0.012;
 
-    drawSparkleEye(painter, size * 0.31, eyeY, size, 1.12, gazeOffset);
-    drawSparkleEye(painter, size * 0.69, eyeY, size, 1.12, gazeOffset);
+    drawSparkleEye(painter, size * 0.31, eyeY, size);
+    drawSparkleEye(painter, size * 0.69, eyeY, size);
 
-    painter.setPen(QPen(QColor(255, 220, 90, 220), size * 0.012, Qt::SolidLine, Qt::RoundCap));
-    painter.drawLine(QPointF(size * 0.18, size * 0.30 + breath),
-                     QPointF(size * 0.13, size * 0.24 + breath));
-    painter.drawLine(QPointF(size * 0.82, size * 0.30 + breath),
-                     QPointF(size * 0.87, size * 0.24 + breath));
+    struct StarSpot { qreal dx; qreal dy; qreal radius; qreal speed; qreal phase; };
+    static const StarSpot leftStars[] = {
+        {-0.09, -0.10, 0.022, 0.10, 0.0},
+        {0.10, -0.06, 0.016, 0.13, 2.1},
+        {-0.02, -0.14, 0.013, 0.16, 4.2},
+    };
+    static const StarSpot rightStars[] = {
+        {0.09, -0.10, 0.022, 0.10, 1.4},
+        {-0.10, -0.06, 0.016, 0.13, 3.5},
+        {0.02, -0.14, 0.013, 0.16, 5.6},
+    };
+    for (const StarSpot &star : leftStars) {
+        const qreal opacity = std::max(0.0, std::sin(animationFrame * star.speed + star.phase));
+        drawTwinkleStar(painter, size * (0.31 + star.dx), eyeY + size * star.dy,
+                        size * star.radius, opacity);
+    }
+    for (const StarSpot &star : rightStars) {
+        const qreal opacity = std::max(0.0, std::sin(animationFrame * star.speed + star.phase));
+        drawTwinkleStar(painter, size * (0.69 + star.dx), eyeY + size * star.dy,
+                        size * star.radius, opacity);
+    }
+
     drawSmile(painter, size, breath);
 }
 
@@ -204,27 +266,25 @@ void RobotFaceWidget::drawLoveExpression(QPainter &painter, qreal size) const
 {
     const qreal breath = std::sin(animationFrame * 0.06) * size * 0.012;
     const qreal eyeY = size * 0.42 + breath;
-    const qreal heartWidth = size * 0.12;
-    const qreal heartHeight = size * 0.11;
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor("#FF6F9F"));
-    for (const qreal centerX : {size * 0.31, size * 0.69}) {
-        QPainterPath heart;
-        heart.moveTo(centerX, eyeY + heartHeight * 0.45);
-        heart.cubicTo(centerX - heartWidth * 0.65, eyeY,
-                      centerX - heartWidth * 0.55, eyeY - heartHeight * 0.5,
-                      centerX, eyeY - heartHeight * 0.1);
-        heart.cubicTo(centerX + heartWidth * 0.55, eyeY - heartHeight * 0.5,
-                      centerX + heartWidth * 0.65, eyeY,
-                      centerX, eyeY + heartHeight * 0.45);
-        painter.drawPath(heart);
-    }
-
-    painter.setBrush(QColor(255, 190, 215, 180));
-    painter.drawEllipse(QPointF(size * 0.23, size * 0.58 + breath), size * 0.07, size * 0.032);
-    painter.drawEllipse(QPointF(size * 0.77, size * 0.58 + breath), size * 0.07, size * 0.032);
+    drawSparkleEye(painter, size * 0.31, eyeY, size);
+    drawSparkleEye(painter, size * 0.69, eyeY, size);
     drawSmile(painter, size, breath);
+
+    struct Balloon { qreal xFraction; qreal phase; QColor color; };
+    static const Balloon balloons[] = {
+        {0.16, 0.0, QColor("#FF6F9F")},
+        {0.42, 90.0, QColor("#8F7BFF")},
+        {0.66, 190.0, QColor("#5AC8FA")},
+        {0.86, 40.0, QColor("#FFC857")},
+    };
+    constexpr qreal loopFrames = 260.0;
+    for (const Balloon &balloon : balloons) {
+        const qreal t = std::fmod(animationFrame + balloon.phase, loopFrames) / loopFrames;
+        const qreal centerY = size * 1.15 - t * size * 1.5;
+        const qreal sway = std::sin((animationFrame + balloon.phase) * 0.03) * size * 0.02;
+        drawBalloon(painter, size * balloon.xFraction + sway, centerY, size, balloon.color);
+    }
 }
 
 void RobotFaceWidget::drawCustomImage(QPainter &painter) const

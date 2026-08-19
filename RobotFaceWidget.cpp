@@ -45,7 +45,12 @@ bool RobotFaceWidget::setCustomImage(const QString &imagePath)
         return false;
 
     customImage = image;
-    setExpression(Expression::Custom);
+    if (expression != Expression::Custom) {
+        setExpression(Expression::Custom);
+    } else {
+        // Keep expression unchanged but force repaint for new image content.
+        update();
+    }
     return true;
 }
 

@@ -51,11 +51,14 @@ int main(int argc, char *argv[])
             ledThread.cmd("rainbow_flow");
             setFaceExpression(RobotFaceWidget::Expression::Happy);
         }},
-        {20*1000, false, [&ledThread, setFaceExpression] {
+        {20*1000, false, [&ledThread, setFaceExpression, setCustomImage] {
             // 今天是我们在一起的1186天，我们一起走过来三个春秋,回忆我们的相识相知，过去的每一天我都非常的幸福
             system("tinyplay /root/2.wav");
             ledThread.cmd("blink 255 100 180 260");
             setFaceExpression(RobotFaceWidget::Expression::Cute);
+            sleep(5);
+            setCustomImage("/root/1186.jpg");
+            setFaceExpression(RobotFaceWidget::Expression::Custom);
         }},
         {11*1000, false, [&ledThread, setFaceExpression] {
             // 三年前我们在紫金山，第一次牵你的手，我的心砰砰跳
@@ -67,7 +70,7 @@ int main(int argc, char *argv[])
             // 两年前我们一起旅行，在海边，在山上，在草原，在沙漠，我想永远和你在一起
             system("tinyplay /root/4.wav");
             ledThread.cmd("fixed 60 150 255");
-            setFaceExpression(RobotFaceWidget::Expression::Happy);
+            setFaceExpression(RobotFaceWidget::Expression::Cute);
         }},
         {18*1000, false, [&ledThread, setFaceExpression] {
             // 一年前我们终于携手走进婚姻的殿堂，共同筑起我们的小家，我在外漂泊的我终于有了自己的小家
@@ -91,32 +94,32 @@ int main(int argc, char *argv[])
             // [播放音乐] 照片1
             system("tinyplay /root/8.wav");
             ledThread.cmd("rainbow_flow");
-            setFaceExpression(RobotFaceWidget::Expression::Custom);
             setCustomImage("/root/1.jpg");
+            setFaceExpression(RobotFaceWidget::Expression::Custom);
         }},
         {3000, false, [&ledThread, setFaceExpression, setCustomImage] {
             // 照片2
             ledThread.cmd("fixed 255 120 80");
-            setFaceExpression(RobotFaceWidget::Expression::Custom);
             setCustomImage("/root/2.jpg");
+            setFaceExpression(RobotFaceWidget::Expression::Custom);
         }},
         {3000, false, [&ledThread, setFaceExpression, setCustomImage] {
             // 照片3
             ledThread.cmd("fixed 80 160 255");
-            setFaceExpression(RobotFaceWidget::Expression::Custom);
             setCustomImage("/root/3.jpg");
+            setFaceExpression(RobotFaceWidget::Expression::Custom);
         }},
         {3000, false, [&ledThread, setFaceExpression, setCustomImage] {
             // 照片4
             ledThread.cmd("blink 255 100 180 300");
-            setFaceExpression(RobotFaceWidget::Expression::Custom);
             setCustomImage("/root/4.jpg");
+            setFaceExpression(RobotFaceWidget::Expression::Custom);
         }},
         {3000, false, [&ledThread, setFaceExpression, setCustomImage] {
             // 照片5
             ledThread.cmd("fixed 180 80 255");
-            setFaceExpression(RobotFaceWidget::Expression::Custom);
             setCustomImage("/root/5.jpg");
+            setFaceExpression(RobotFaceWidget::Expression::Custom);
         }},
         {0, false, [&ledThread, setFaceExpression] {
             ledThread.cmd("rainbow_flow");

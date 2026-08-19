@@ -17,6 +17,8 @@ public:
         Happy,
         Cute,
         Shy,
+        Excited,
+        Love,
         Custom
     };
 
@@ -35,6 +37,8 @@ private:
     void drawHappyExpression(QPainter &painter, qreal size) const;
     void drawCuteExpression(QPainter &painter, qreal size) const;
     void drawShyExpression(QPainter &painter, qreal size) const;
+    void drawExcitedExpression(QPainter &painter, qreal size) const;
+    void drawLoveExpression(QPainter &painter, qreal size) const;
     void drawCustomImage(QPainter &painter) const;
     void drawDotEyes(QPainter &painter, qreal size, qreal verticalOffset = 0.0) const;
     void drawSparkleEye(QPainter &painter, qreal centerX, qreal centerY, qreal size,

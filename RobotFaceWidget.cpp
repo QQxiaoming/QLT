@@ -76,6 +76,12 @@ void RobotFaceWidget::mousePressEvent(QMouseEvent *event)
     case Expression::Shy:
         setExpression(Expression::Happy);
         break;
+    case Expression::Excited:
+        setExpression(Expression::Love);
+        break;
+    case Expression::Love:
+        setExpression(Expression::Happy);
+        break;
     case Expression::Custom:
         setExpression(Expression::Happy);
         break;
@@ -177,6 +183,50 @@ void RobotFaceWidget::drawShyExpression(QPainter &painter, qreal size) const
     drawSmile(painter, size, breath);
 }
 
+void RobotFaceWidget::drawExcitedExpression(QPainter &painter, qreal size) const
+{
+    const qreal breath = std::sin(animationFrame * 0.09) * size * 0.018;
+    const qreal eyeY = size * 0.42 + breath;
+    const qreal gazeOffset = std::sin(animationFrame * 0.12) * size * 0.012;
+
+    drawSparkleEye(painter, size * 0.31, eyeY, size, 1.12, gazeOffset);
+    drawSparkleEye(painter, size * 0.69, eyeY, size, 1.12, gazeOffset);
+
+    painter.setPen(QPen(QColor(255, 220, 90, 220), size * 0.012, Qt::SolidLine, Qt::RoundCap));
+    painter.drawLine(QPointF(size * 0.18, size * 0.30 + breath),
+                     QPointF(size * 0.13, size * 0.24 + breath));
+    painter.drawLine(QPointF(size * 0.82, size * 0.30 + breath),
+                     QPointF(size * 0.87, size * 0.24 + breath));
+    drawSmile(painter, size, breath);
+}
+
+void RobotFaceWidget::drawLoveExpression(QPainter &painter, qreal size) const
+{
+    const qreal breath = std::sin(animationFrame * 0.06) * size * 0.012;
+    const qreal eyeY = size * 0.42 + breath;
+    const qreal heartWidth = size * 0.12;
+    const qreal heartHeight = size * 0.11;
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor("#FF6F9F"));
+    for (const qreal centerX : {size * 0.31, size * 0.69}) {
+        QPainterPath heart;
+        heart.moveTo(centerX, eyeY + heartHeight * 0.45);
+        heart.cubicTo(centerX - heartWidth * 0.65, eyeY,
+                      centerX - heartWidth * 0.55, eyeY - heartHeight * 0.5,
+                      centerX, eyeY - heartHeight * 0.1);
+        heart.cubicTo(centerX + heartWidth * 0.55, eyeY - heartHeight * 0.5,
+                      centerX + heartWidth * 0.65, eyeY,
+                      centerX, eyeY + heartHeight * 0.45);
+        painter.drawPath(heart);
+    }
+
+    painter.setBrush(QColor(255, 190, 215, 180));
+    painter.drawEllipse(QPointF(size * 0.23, size * 0.58 + breath), size * 0.07, size * 0.032);
+    painter.drawEllipse(QPointF(size * 0.77, size * 0.58 + breath), size * 0.07, size * 0.032);
+    drawSmile(painter, size, breath);
+}
+
 void RobotFaceWidget::drawCustomImage(QPainter &painter) const
 {
     if (customImage.isNull())
@@ -220,6 +270,12 @@ void RobotFaceWidget::paintEvent(QPaintEvent *event)
         break;
     case Expression::Shy:
         drawShyExpression(painter, size);
+        break;
+    case Expression::Excited:
+        drawExcitedExpression(painter, size);
+        break;
+    case Expression::Love:
+        drawLoveExpression(painter, size);
         break;
     case Expression::Custom:
         break;
